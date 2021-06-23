@@ -8,7 +8,7 @@ python build_combinations_errors.py path_to_build_combinations_folder [--output_
 
 For example:
 
-python python build_combinations_errors.py archive/Build_Combinations
+python build_combinations_errors.py archive/Build_Combinations
 
 By default the logs go to "error_summaries," but you can specify where it goes with --ouput_path.
 
