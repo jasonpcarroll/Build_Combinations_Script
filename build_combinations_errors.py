@@ -2,6 +2,7 @@ from pathlib import Path
 import re
 import argparse
 import os
+from multiprocessing import Pool
 
 # used for regex sub in order to compare lines without numbers that would
 # otherwise make lines seem distinct
@@ -45,6 +46,7 @@ def parse_errors_from_log(log_file_path):
     return error_str_with_removal, error_str_full, unique_error_lines
 
 def parse_errors_for_board(board_directory, board_name_str, output_path="error_summaries"):
+
     unique_error_lines_board_dict = {}
 
     unique_error_logs_dict = {}
@@ -124,13 +126,14 @@ def parse_errors_for_board(board_directory, board_name_str, output_path="error_s
                 error_summary_file.write(f'--------------------------------------------\n')
                 error_num += 1
 
-def parse_build_combinations_errors(build_combinations_path):
+def parse_build_combinations_errors(build_combinations_path, num_processes):
     vendor_dirs = Path(build_combinations_path).iterdir()
+    board_tups = []
 
     for vendor_dir in vendor_dirs:
-        board_dirs = vendor_dir.iterdir()
-        for board_dir in board_dirs:
-            parse_errors_for_board(board_dir, board_dir.name)
+        board_tups += [(board_dir, board_dir.name) for board_dir in vendor_dir.iterdir()]
+    pool = Pool(num_processes)
+    pool.starmap(parse_errors_for_board, board_tups)
 
 def main():
     parser = argparse.ArgumentParser(description='Build_Combinations error parser.')
@@ -144,9 +147,16 @@ def main():
                         required=False,
                         help='Path to directory where error files are written. By default they get written to \"error_summaries\"')
 
+    parser.add_argument('-n',
+                        '--num_processes',
+                        type=int,
+                        default=4,
+                        required=False,
+                        help='Number of processes to run in parallel')
+
     args = parser.parse_args()
 
-    parse_build_combinations_errors(args.build_combinations_path)
+    parse_build_combinations_errors(args.build_combinations_path, args.num_processes)
 
 if __name__ == "__main__":
     main()
